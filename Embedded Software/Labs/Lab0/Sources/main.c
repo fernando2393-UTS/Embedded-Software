@@ -86,11 +86,7 @@ int main(void)
       // Hours
       timeToStore.hours = Hours;
 
-      if(FIFO_Write(timeToStore)==1){
-	  // The array is full
-      }
-
-
+      FIFO_Write(timeToStore);
   }
 }
 

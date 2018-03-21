@@ -14,24 +14,29 @@
 
 
 // CPU module - contains low level hardware initialization routines
-#include "FIFO.h"
 #include "Cpu.h"
-#include "Events.h"
-#include "PE_Types.h"
-#include "PE_Error.h"
-#include "PE_Const.h"
-#include "IO_Map.h"
-#include "stdint.h"
 
 // Simple timer
 #include "timer.h"
 
-  // Definition of FIFO structure
+// Button functions
+#include "buttons.h"
+
+// LED functions
+#include "LEDs.h"
+
+#include "FIFO.h"
+
+// The packed time representation
+
+//   15             12   11                        6    5                       0
+// |----|----|----|----|----|----|----|----|----|----|----|----|----|----|----|----|
+// |       hours       |          minutes            |          seconds            |
 
 typedef uint16_t PackedTime_t;
 
 // ***
-// You will need to create a FIFO object of size 10 to store time-stamps using the packed time representation.
+// You will need to create a FIFO object with a size suitable to store 10 time-stamps using the packed time representation.
 // ***
 
 uint8_t Seconds = 0;
@@ -39,21 +44,20 @@ uint8_t Minutes = 0;
 uint8_t Hours = 0;
 
 
-
-void OneSecondElapsed(void* arg)
+static void OneSecondElapsed(void)
 {
+  LEDs_Toggle(LED_BLUE);
   // One second has elapsed - update the time here
-  Seconds = Seconds++;
-
+  Seconds++;
   if(Seconds==60){
       Seconds = 0;
       Minutes++;
   }
 
   if(Minutes==60){
-        Minutes = 0;
-        Hours++;
-    }
+      Minutes = 0;
+      Hours++;
+  }
 
   if(Hours==12){
       Hours=0;
@@ -61,33 +65,42 @@ void OneSecondElapsed(void* arg)
 }
 
 
+uint8_t i = 0;
+Time_struct timeToStore;
+
+static void Button1Pressed(void)
+{
+  LEDs_Toggle(LED_ORANGE);
+  // The button has been pressed - put a time-stamp into the FIFO
+  //Seconds
+  timeToStore.seconds = Seconds;
+  // Minutes
+  timeToStore.minutes = Minutes;
+  // Hours
+  timeToStore.hours = Hours;
+
+  i = FIFO_Write(timeToStore, i);
+}
+
+static void TowerInit(void)
+{
+  PE_low_level_init();
+  Timer_Init(OneSecondElapsed);
+  Buttons_Init(Button1Pressed);
+  LEDs_Init();
+  __EI();
+}
+
 /*lint -save  -e970 Disable MISRA rule (6.3) checking. */
 int main(void)
 /*lint -restore Enable MISRA rule (6.3) checking. */
 {
-  /* Write your local variable definition here */
-  Time_struct timeToStore;
 
-
-  /*** Processor Expert internal initialization. DON'T REMOVE THIS CODE!!! ***/
-  PE_low_level_init();
-  /*** End of Processor Expert internal initialization.                    ***/
-  PE_low_level_init();
-  Timer_Init(OneSecondElapsed, NULL);
-
+  TowerInit();
   /* Write your code here */
   for (;;)
   {
-      // When Button is pushed
-      // Execute this code
-      // Seconds
-      timeToStore.seconds = Seconds;
-      // Minutes
-      timeToStore.minutes = Minutes;
-      // Hours
-      timeToStore.hours = Hours;
 
-      FIFO_Write(timeToStore);
   }
 }
 

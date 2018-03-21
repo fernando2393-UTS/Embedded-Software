@@ -10,35 +10,31 @@
 
 uint16_t Array[10];
 
-uint8_t FIFO_Write(Time_struct dataIn){
+uint8_t FIFO_Write(Time_struct dataIn, uint8_t i){
 
   uint16_t timeStamp;
   // need to convert Time_struct into uint16_t
 
-      uint8_t counter = 0;
+  uint8_t counter = 0;
 
-      // need to convert Time_struct into uint16_t
+  // need to convert Time_struct into uint16_t
 
-      timeStamp = dataIn.seconds;
-      timeStamp = timeStamp + (dataIn.minutes << 6);
-      timeStamp = timeStamp + (dataIn.hours << 12);
+  timeStamp = dataIn.seconds;
+  timeStamp = timeStamp + (dataIn.minutes << 6);
+  timeStamp = timeStamp + (dataIn.hours << 12);
 
-      for(int i = 0; i<10; i++){
-	  if(Array[i]==0){
-	      Array[i]==timeStamp;
-	  }
-	  else{
-	      counter++;
-	  }
-      }
 
-      if(counter==10){
-	  // If the counter is equal 10, no free positions remaining
-	  return 1;
-      }
-
-      return 0;
+  Array[i] == timeStamp;
+  if(i==9){
+      // If the counter is equal 10, restart as a circular array
+      i = 0;
   }
+  else{
+      i++;
+  }
+
+  return i;
+}
 
 /*uint16_t FIFO_Give(void){
 

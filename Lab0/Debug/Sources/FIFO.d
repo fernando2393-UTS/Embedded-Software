@@ -1,3 +1,4 @@
-Sources/FIFO.o: ../Sources/FIFO.c ../Sources/FIFO.h
+Sources/FIFO.o: ../Sources/FIFO.c \
+ C:\Users\13181680\Downloads\Lab0\Library/FIFO.h
 
-../Sources/FIFO.h:
+C:\Users\13181680\Downloads\Lab0\Library/FIFO.h:

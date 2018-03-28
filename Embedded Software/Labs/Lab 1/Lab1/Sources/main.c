@@ -29,11 +29,17 @@
 
 // CPU mpdule - contains low level hardware initialization routines
 #include "Cpu.h"
-#include "Events.h"
-#include "PE_Types.h"
-#include "PE_Error.h"
-#include "PE_Const.h"
-#include "IO_Map.h"
+#include "UART.h"
+#include "packet.h"
+#include "FIFO.h"
+
+#define BAUDRATE 38400
+
+void startPackets();
+void packetHandler();
+
+uint8_t LSB = 0x50; // LSB tower number
+uint8_t MSB = 0x10; // MSB tower number
 
 /*lint -save  -e970 Disable MISRA rule (6.3) checking. */
 int main(void)
@@ -46,8 +52,17 @@ int main(void)
   /*** End of Processor Expert internal initialization.                    ***/
 
   /* Write your code here */
+
+  Packet_Init(BAUDRATE, CPU_BUS_CLK_HZ); // Initialization function
+
+  startPackets(); //Initial packets
+
   for (;;)
   {
+      UART_Poll();
+      if(Packet_Get()){ //Check if received packets
+	  packetHandler(); // Handle received packets
+      }
   }
 
   /*** Don't write any code pass this line, or it will be deleted during code generation. ***/
@@ -62,6 +77,64 @@ int main(void)
 } /*** End of main routine. DO NOT MODIFY THIS TEXT!!! ***/
 
 /* END main */
+
+
+void startPackets(){
+  Packet_Put(0x04,0x00,0x00,0x00); // Tower startup packet
+  Packet_Put(0x09,'v',1,0); // Tower version packet
+  Packet_Put(0x0B,0x01,LSB,MSB); // Tower number packet
+}
+
+void packetHandler(){
+
+  bool values = false;
+
+  switch (Packet_Command & 0x7F)
+  {
+
+    case 0x04:
+
+      // Here we get the startup values
+      values = Packet_Put(0x04,0x00,0x00,0x00) & Packet_Put(0x09,'v',1,0) & Packet_Put(0x0B,0x01,LSB,MSB);
+
+      break;
+
+    case 0x09:
+
+      values = Packet_Put(0x09,'v',1,0); // Version value
+
+      break;
+
+    case 0x0B:
+
+      if (Packet_Parameter1 == 0x01){ // Get tower number
+	  values = Packet_Put(0x0B,0x01,LSB,MSB);
+      }
+
+      if (Packet_Parameter1 == 0x02){ // Set tower number
+	  LSB = Packet_Parameter2; // New LSB written
+	  MSB = Packet_Parameter3; // New MSB written
+	  values = Packet_Put(0x0B,0x01,LSB,MSB); // New tower number set
+      }
+
+      break;
+
+    default: break;
+  }
+
+  if (Packet_Command & 0x80) // Check for ACK
+     {
+       if (values==false)
+       {
+         Packet_Command &= 0x7F; // Clear ACK flag
+       }
+       Packet_Put(Packet_Command,Packet_Parameter1,Packet_Parameter2,Packet_Parameter3);
+     }
+
+}
+
+
+
 /*!
 ** @}
 */

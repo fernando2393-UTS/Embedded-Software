@@ -1,5 +1,5 @@
 # Embedded Software
-Embedded Software projects from UTS:
+UTS Embedded Software course projects.
 
 Here it can be found 5 different folders in which different features are applied to a Kinetis microcontroller in a cummulative way.
 
